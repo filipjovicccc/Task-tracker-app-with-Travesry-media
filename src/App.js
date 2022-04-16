@@ -2,14 +2,14 @@ import { useState, useEffect } from "react";
 import Header from "./components/Header";
 import Tasks from "./components/Tasks";
 import AddTask from "./components/AddTask";
-
+//list. delete, add
 function App() {
   const [showAddTask, setShowAddTask] = useState(false);
   const [tasks, setTasks] = useState([]);
 
   useEffect(() => {
     const getTasks = async () => {
-      //fetchovanje podataka sa backanda ovde u smislu jsona
+      //fetchovanje podataka sa backanda ovde u smislu jsona, kao
       const tasksFromServer = await fetchTasks();
       setTasks(tasksFromServer);
     };
@@ -23,11 +23,32 @@ function App() {
 
     return data;
   };
+  //fatch task -singular
+  const fetchTask = async (id) => {
+    const res = await fetch(`http://localhost:5000/tasks/${id}`);
+    const data = await res.json();
 
-  const addTask = (task) => {
-    const id = Math.floor(Math.random() * 10000) + 1;
-    const newTask = { id, ...task };
-    setTasks([...tasks, newTask]);
+    return data;
+  };
+
+  const addTask = async (task) => {
+    const res = await fetch(
+      "http://localhost:5000/tasks",
+      {
+        method: "POST", //post metod
+        headers: {
+          "Content-type": "application/json",
+        },
+        body: JSON.stringify(task),
+      } //method POST
+    );
+
+    const data = await res.json();
+    setTasks([...tasks, data]);
+
+    // const id = Math.floor(Math.random() * 10000) + 1;
+    // const newTask = { id, ...task };
+    // setTasks([...tasks, newTask]);
   };
 
   //delete task
@@ -36,15 +57,29 @@ function App() {
     console.log("click");
   };
 
-  const deleteTask = (id) => {
+  const deleteTask = async (id) => {
+    await fetch(`http://localhost:5000/tasks/${id}`, { method: "DELETE" }); //method delete
     setTasks(tasks.filter((task) => task.id !== id));
   };
   //Toggle Reminder
 
-  const toggleReminder = (id) => {
+  const toggleReminder = async (id) => {
+    const taskToToggle = await fetchTask(id);
+    const updTask = { ...taskToToggle, reminder: !taskToToggle.reminder };
+
+    const res = await fetch(`http://localhost:5000/tasks/${id}`, {
+      method: "PUT",                          //put metoda takodje za fetchovanje
+      headers: {
+        "Content-type": "application/json",
+      },
+      body: JSON.stringify(updTask),
+    });
+
+    const data = await res.json();
+
     setTasks(
       tasks.map((task) =>
-        task.id === id ? { ...task, reminder: !task.reminder } : task
+        task.id === id ? { ...task, reminder: data.reminder } : task
       )
     );
   };
